@@ -10,8 +10,7 @@ use sevria_core::init_env;
     path = "/hello",
     method = "get",
     tag = "Greetings",
-    description = "Returns a friendly hello-world greeting",
-    response_desc = "A JSON object with a greeting message"
+    description = "Returns a friendly hello-world greeting"
 )]
 async fn hello() -> Value {
     json!({ "message": "Hello, world!" })

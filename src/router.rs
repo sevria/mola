@@ -4,7 +4,8 @@ use axum::{Json, Router as AxumRouter, response::Html, routing::get};
 use log::info;
 use serde::Serialize;
 use tokio::net::TcpListener;
-use utoipa::openapi::OpenApi;
+use utoipa::openapi::{OpenApi, RefOr};
+use utoipa::openapi::schema::{Components, Schema};
 
 use crate::openapi::scalar_ui_html;
 use utoipa::openapi::path::PathItem;
@@ -61,6 +62,18 @@ impl Router {
         if let Some(ref mut openapi) = self.openapi {
             let (path_str, path_item) = item.into();
             openapi.paths.paths.insert(path_str, path_item);
+        }
+        self
+    }
+
+    /// Register a JSON Schema in the OpenAPI `components/schemas` section.
+    /// The `schema_json` value is deserialized into a [`utoipa::openapi::schema::Schema`].
+    pub fn add_schema(&mut self, name: &str, schema_json: serde_json::Value) -> &mut Self {
+        if let Some(ref mut openapi) = self.openapi {
+            if let Ok(schema) = serde_json::from_value::<Schema>(schema_json) {
+                let components = openapi.components.get_or_insert_with(Components::new);
+                components.schemas.insert(name.to_string(), RefOr::T(schema));
+            }
         }
         self
     }

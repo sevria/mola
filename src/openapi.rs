@@ -1,7 +1,10 @@
 use utoipa::openapi::{
-    Deprecated, RefOr,
+    Deprecated, Ref, RefOr,
+    content::Content,
     path::{HttpMethod, Operation, PathItem},
+    request_body::RequestBody,
     response::{Response as OpenApiResponse, ResponseBuilder},
+    schema::Schema,
 };
 
 pub use utoipa::openapi::{InfoBuilder, OpenApiBuilder, ServerBuilder};
@@ -115,11 +118,55 @@ pub mod path {
             self
         }
 
-        /// Add a JSON response. The type parameter `T` is only used for the
-        /// *description* text — schema generation from Rust types requires the
-        /// `utoipa::ToSchema` derive macro on `T` and is opt-in.
+        /// Add a JSON request body. Extracts the schema name from the type
+        /// parameter `T` at runtime via `std::any::type_name`.
+        pub fn json_request<T>(self, desc: &str) -> Self {
+            let type_name = std::any::type_name::<T>();
+            let schema_name = type_name.rsplit("::").next().unwrap_or(type_name);
+            self.json_request_with_schema(desc, schema_name)
+        }
+
+        /// Add a JSON request body with an explicit schema name.
+        pub fn json_request_with_schema(mut self, desc: &str, schema_name: &str) -> Self {
+            let content = Content::new(Some(RefOr::Ref(Ref::from_schema_name(schema_name))));
+            let mut request_body = RequestBody::new();
+            request_body.description = Some(desc.to_string());
+            request_body
+                .content
+                .insert("application/json".into(), content);
+            self.operation.request_body = Some(request_body);
+            self
+        }
+
+        /// Add a request body with the given description and content type
+        /// (no schema reference — use `json_request_with_schema` for that).
+        pub fn request_body(mut self, desc: &str, content_type: &str) -> Self {
+            let mut request_body = RequestBody::new();
+            request_body.description = Some(desc.to_string());
+            request_body
+                .content
+                .insert(content_type.into(), Content::new(None::<RefOr<Schema>>));
+            self.operation.request_body = Some(request_body);
+            self
+        }
+
+        /// Add a JSON response for status 200. Extracts the schema name from
+        /// the type parameter `T` at runtime.
         pub fn json_response<T>(self, desc: &str) -> Self {
-            self.response("200", json_response(desc))
+            let type_name = std::any::type_name::<T>();
+            let schema_name = type_name.rsplit("::").next().unwrap_or(type_name);
+            self.json_content_response("200", desc, schema_name)
+        }
+
+        /// Add a JSON response with an explicit status code, description,
+        /// and schema name.
+        pub fn json_content_response(self, status: &str, desc: &str, schema_name: &str) -> Self {
+            let content = Content::new(Some(RefOr::Ref(Ref::from_schema_name(schema_name))));
+            let response = ResponseBuilder::new()
+                .description(desc)
+                .content("application/json", content)
+                .build();
+            self.response(status, response)
         }
 
         /// Add an arbitrary response by status code.

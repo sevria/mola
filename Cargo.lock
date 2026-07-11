@@ -529,9 +529,9 @@ dependencies = [
 
 [[package]]
 name = "mola-macros"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50f2ccf9212c9b7c0255cab5ce7bdb0379cf68a9d7f07fa254cc8f57c94e8b9c"
+checksum = "2bdf63ef2d0c95aabc5bdb07da5ec1ff1751ace7ab9be42217df691df9a1a967"
 dependencies = [
  "proc-macro2",
  "quote",
