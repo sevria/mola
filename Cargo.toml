@@ -12,13 +12,9 @@ description = "High-performance, ergonomic Rust framework for building REST APIs
 anyhow = "1.0.103"
 axum = "0.8.9"
 log = "0.4.33"
-mola-macros = "0.1.1"
+mola-macros = "0.1.2"
 paste = "1.0.15"
 serde = "1.0.228"
 serde_json = "1.0.150"
-sevria-core = "0.1.1"
 tokio = "1.52.3"
 utoipa = { version = "5.5.0", features = ["axum_extras"] }
-
-[dev-dependencies]
-tokio = { version = "1.52.3", features = ["full"] }
