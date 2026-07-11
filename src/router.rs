@@ -144,7 +144,7 @@ impl Router {
     pub async fn run(self, address: &str) -> Result<()> {
         let listener = TcpListener::bind(address).await?;
 
-        info!("Running HTTP server on {}", address);
+        info!("Running HTTP router on {}", address);
 
         let router = if let Some(openapi) = self.openapi {
             let spec_json = serde_json::to_value(&openapi).unwrap_or_default();

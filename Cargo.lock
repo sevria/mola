@@ -748,9 +748,9 @@ dependencies = [
 
 [[package]]
 name = "sevria-core"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54ac48ad953530c9e40317c502a66a84d3a42bc96496dad122056cb5250fbef6"
+checksum = "4b5788510f6b21a4edafb8eb0e4764e3723f342df8ba6cd4f7392294b5d7d94f"
 dependencies = [
  "anyhow",
  "dotenvy",
