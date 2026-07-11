@@ -2,5 +2,10 @@
 name = "mola"
 version = "0.0.0"
 edition = "2024"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/sevria/mola"
+homepage = "https://github.com/sevria/mola"
+description = "High-performance, ergonomic Rust framework for building REST APIs."
 
 [dependencies]
