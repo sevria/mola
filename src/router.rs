@@ -4,8 +4,8 @@ use axum::{Json, Router as AxumRouter, response::Html, routing::get};
 use log::info;
 use serde::Serialize;
 use tokio::net::TcpListener;
-use utoipa::openapi::{OpenApi, RefOr};
 use utoipa::openapi::schema::{Components, Schema};
+use utoipa::openapi::{OpenApi, RefOr};
 
 use crate::openapi::scalar_ui_html;
 use utoipa::openapi::path::PathItem;
@@ -59,21 +59,21 @@ impl Router {
     ///     .json_response::<Vec<User>>("A list of users"));
     /// ```
     pub fn describe(&mut self, item: impl Into<(String, PathItem)>) -> &mut Self {
-        if let Some(ref mut openapi) = self.openapi {
-            let (path_str, path_item) = item.into();
-            openapi.paths.paths.insert(path_str, path_item);
-        }
+        let openapi = self.openapi.get_or_insert_with(OpenApi::default);
+        let (path_str, path_item) = item.into();
+        openapi.paths.paths.insert(path_str, path_item);
         self
     }
 
     /// Register a JSON Schema in the OpenAPI `components/schemas` section.
     /// The `schema_json` value is deserialized into a [`utoipa::openapi::schema::Schema`].
     pub fn add_schema(&mut self, name: &str, schema_json: serde_json::Value) -> &mut Self {
-        if let Some(ref mut openapi) = self.openapi {
-            if let Ok(schema) = serde_json::from_value::<Schema>(schema_json) {
-                let components = openapi.components.get_or_insert_with(Components::new);
-                components.schemas.insert(name.to_string(), RefOr::T(schema));
-            }
+        if let Ok(schema) = serde_json::from_value::<Schema>(schema_json) {
+            let openapi = self.openapi.get_or_insert_with(OpenApi::default);
+            let components = openapi.components.get_or_insert_with(Components::new);
+            components
+                .schemas
+                .insert(name.to_string(), RefOr::T(schema));
         }
         self
     }
@@ -92,6 +92,48 @@ impl Router {
     #[allow(clippy::should_implement_trait)]
     pub fn add(mut self, handle: RouteHandle) -> Self {
         (handle.register)(&mut self);
+        self
+    }
+
+    /// Nest another [`Router`] under a path prefix. All routes from the nested
+    /// router are served under the given prefix, and their OpenAPI paths are
+    /// merged accordingly.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let email_router = Router::new().add(handler!(send_email));
+    /// let main_router = Router::new()
+    ///     .with_openapi(openapi)
+    ///     .nest("/emails", email_router);
+    /// ```
+    pub fn nest(mut self, prefix: &str, nested: Router) -> Self {
+        // Merge OpenAPI paths from the nested router, prefixing each path
+        // NOTE: must access nested.openapi BEFORE nested.router is moved
+        if let Some(nested_openapi) = nested.openapi {
+            let main_openapi = self.openapi.get_or_insert_with(OpenApi::default);
+            for (path, item) in nested_openapi.paths.paths {
+                let prefixed = if path == "/" {
+                    prefix.to_string()
+                } else {
+                    format!("{prefix}{path}")
+                };
+                main_openapi.paths.paths.insert(prefixed, item);
+            }
+            // Merge schemas from nested router
+            if let Some(nested_components) = nested_openapi.components {
+                let main_components = main_openapi
+                    .components
+                    .get_or_insert_with(utoipa::openapi::schema::Components::new);
+                for (name, schema) in nested_components.schemas {
+                    main_components.schemas.insert(name, schema);
+                }
+            }
+        }
+
+        // Merge the axum routers (consume nested.router last)
+        self.router = self.router.nest(prefix, nested.router);
+
         self
     }
 
