@@ -276,7 +276,7 @@ dependencies = [
 
 [[package]]
 name = "mola"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "anyhow",
  "axum",
@@ -291,9 +291,9 @@ dependencies = [
 
 [[package]]
 name = "mola-macros"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ef708ef404cce0b8fc08ed160e5e6fe8c88118e00db0e9f266b9dc7d4dcaf97"
+checksum = "ffa931518f5aec22cea9706608116c47f7e60778a4eec90e21f1d58193fd3f47"
 dependencies = [
  "proc-macro2",
  "quote",
